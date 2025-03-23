@@ -4,7 +4,7 @@ namespace ArctisBatteryMonitor.Services
 {
     internal class HeadsetService
     {
-        public List<(string Name, int ProductId, byte[] outputBuffer)> connectedDevices = [];
+        public List<(string name, int productId, byte[] outputBuffer)> connectedDevices = [];
         private static readonly List<(string name, int productId, byte[] outputBuffer)> _knownHeadsets =
         [
             ("Arctis Pro Wireless", 0x1290, [0x40, 0xaa]),
@@ -48,12 +48,12 @@ namespace ArctisBatteryMonitor.Services
         }
 
         public void GetConnectedHeadsets() {
-            foreach ((string Name, int ProductId, byte[] outputBuffer) in _knownHeadsets)
+            foreach ((string name, int productId, byte[] outputBuffer) in _knownHeadsets)
             {
-                if (DeviceList.Local.GetHidDevices(_vendorId, ProductId).Any())
+                if (DeviceList.Local.GetHidDevices(_vendorId, productId).Any())
                 {
                     connectedDevices.Clear();
-                    connectedDevices.Add((Name, ProductId, outputBuffer));
+                    connectedDevices.Add((name, productId, outputBuffer));
                 }
             }
         }

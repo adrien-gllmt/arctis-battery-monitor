@@ -14,7 +14,7 @@ namespace ArctisBatteryMonitor
         private readonly HeadsetService _headsetService = new();
         private readonly BackgroundWorker HeadsetServiceWorker = new() { WorkerSupportsCancellation = true };
 
-        private static Timer connectingIconsTimer = new(300);
+        private static readonly Timer connectingIconsTimer = new(300);
 
         private static readonly int retryDelay = 15_000;
         private static readonly string retryText = "Retrying in 15 seconds";
