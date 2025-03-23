@@ -16,3 +16,4 @@ By right clicking you will access the app menu (for now : Reconnect / Exit)
 - Manage multiple devices (as of now defaults to the first one found)  
 - Deactivate notifications (display cases : connected event, disconnected event, or every 15s while unable to connect/no devices found)
 - i18n
+- Installer & GH releases
