@@ -1,30 +1,68 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+using System.Timers;
+using arctis_battery_monitor.Services;
+using Timer = System.Timers.Timer;
 
 namespace arctis_battery_monitor
 {
     internal class BatteryMonitor : ApplicationContext
     {
-        private readonly NotifyIcon _notifyIcon;
+        private readonly NotifyIcon _notifyIcon = new()
+        {
+            Text = "Arctis Battery Monitor",
+            ContextMenuStrip = new ContextMenuStrip()
+        };
+        private readonly HeadsetService _headsetService = new();
+        private readonly BackgroundWorker HeadsetServiceWorker = new() { WorkerSupportsCancellation = true };
+
+        private static Timer connectingIconsTimer = new(300);
+
+        private static readonly int retryDelay = 15_000;
+        private static readonly string retryText = "Retrying in 15 seconds";
+        private static readonly int refreshDelay = 30_000;
+
+        private static int connectingIconState = 1;
+        private static List<int> possibleConnectingIconStates = [1, 2, 3, 4];
+        private bool hasBeenDisconnected = false;
 
         public BatteryMonitor()
         {
-            _notifyIcon = new NotifyIcon
-            {
-                Icon = new System.Drawing.Icon("Resources/battery-100.ico"),
-                Text = "Arctis Battery Monitor",
+            connectingIconsTimer.Elapsed += SwitchIcon;
+            connectingIconsTimer.Start();
 
-                ContextMenuStrip = new ContextMenuStrip()
-            };
+            HeadsetServiceWorker.DoWork += HeadsetMonitor;
+
+            _headsetService.GetBatteryLevel();
 
             _notifyIcon.ContextMenuStrip.Items.Add("Reconnect", null, Reconnect);
             _notifyIcon.ContextMenuStrip.Items.Add(new ToolStripSeparator());
             _notifyIcon.ContextMenuStrip.Items.Add("Exit", null, Exit);
 
             _notifyIcon.Visible = true;
+
+            HeadsetServiceWorker.RunWorkerAsync();
+        }
+
+        private void SwitchIcon(object sender, EventArgs e)
+        {
+            if (_headsetService._isConnected)
+            {
+                connectingIconsTimer.Stop();
+                return;
+            }
+
+            _notifyIcon.Icon = new System.Drawing.Icon($"Resources/headset_connecting_{connectingIconState}.ico");
+            connectingIconState = possibleConnectingIconStates.Count == connectingIconState ? possibleConnectingIconStates[0] : connectingIconState + 1;
+        }
+
+        private void Reconnect(object sender, EventArgs e)
+        {
+            HeadsetServiceWorker.CancelAsync();
+            if (!HeadsetServiceWorker.IsBusy) HeadsetServiceWorker.RunWorkerAsync();
         }
 
         private void Exit(object sender, EventArgs e)
@@ -34,9 +72,60 @@ namespace arctis_battery_monitor
             Application.Exit();
         }
 
-        private void Reconnect(object sender, EventArgs e)
+        private void HeadsetMonitor (object sender, DoWorkEventArgs e)
         {
+            while (!HeadsetServiceWorker.CancellationPending)
+            {
 
+                if (_headsetService.connectedDevices is null)
+                {
+                    while (_headsetService.connectedDevices is null)
+                    {
+                        _notifyIcon.ShowBalloonTip(2_000, "No devices found", retryText, ToolTipIcon.Info);
+                        Thread.Sleep(retryDelay);
+                        _headsetService.GetConnectedHeadsets();
+                    }
+                }
+
+                if (!hasBeenDisconnected && !_headsetService.isInit && !_headsetService._isConnected)
+                {
+                    while (!_headsetService._isConnected)
+                    {
+                        _notifyIcon.ShowBalloonTip(2_000, "Unable to connect", retryText, ToolTipIcon.Info);
+                        Thread.Sleep(retryDelay);
+                        _headsetService.GetBatteryLevel();
+                    }
+                }
+
+                if (!_headsetService.isInit && _headsetService._isConnected && _headsetService.chargingStatus != "Disconnected")
+                {
+                    _headsetService._isConnected = true;
+                    _headsetService.isInit = true;
+
+                    _notifyIcon.Icon = new System.Drawing.Icon($"Resources/battery-{_headsetService.batteryLevel}.ico");
+
+                    if (_headsetService.connectedDevices.Count > 1)
+                    {
+                        _notifyIcon.ShowBalloonTip(2_000, "Multiple devices detected", $"Defaulted to {_headsetService.ChosenDevice.name}", ToolTipIcon.Info);
+                        continue;
+                    }
+
+                    _notifyIcon.ShowBalloonTip(2_000, "Successfully connected", $"{_headsetService.ChosenDevice.name}", ToolTipIcon.Info);
+                }
+
+                if (_headsetService.isInit && !_headsetService._isConnected && _headsetService.chargingStatus == "Disconnected")
+                {
+                    _notifyIcon.ShowBalloonTip(2_000, "Disconnected", $"{_headsetService.ChosenDevice.name}", ToolTipIcon.Info);
+                    _headsetService._isConnected = false;
+                    _headsetService.isInit = false;
+                    hasBeenDisconnected = true;
+                    _notifyIcon.Icon = new System.Drawing.Icon("Resources/headset_disconnected.ico");
+                }
+
+                Thread.Sleep(hasBeenDisconnected ? 5_000 : refreshDelay);
+
+                _headsetService.GetBatteryLevel();
+            }
         }
     }
 }
