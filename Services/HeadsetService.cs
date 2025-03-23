@@ -44,7 +44,7 @@ namespace ArctisBatteryMonitor.Services
         public HeadsetService()
         {
             GetConnectedHeadsets();
-            _chosenDevice = connectedDevices.First();
+            if (connectedDevices.Count > 0) _chosenDevice = connectedDevices.First();
         }
 
         public void GetConnectedHeadsets() {

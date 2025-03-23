@@ -31,8 +31,6 @@ namespace ArctisBatteryMonitor
 
             HeadsetServiceWorker.DoWork += HeadsetMonitor;
 
-            _headsetService.GetBatteryLevel();
-
             _notifyIcon.ContextMenuStrip.Items.Add("Reconnect", null, Reconnect);
             _notifyIcon.ContextMenuStrip.Items.Add(new ToolStripSeparator());
             _notifyIcon.ContextMenuStrip.Items.Add("Exit", null, Exit);
@@ -71,16 +69,17 @@ namespace ArctisBatteryMonitor
         {
             while (!HeadsetServiceWorker.CancellationPending)
             {
-
-                if (_headsetService.connectedDevices.Count > 0)
+                if (_headsetService.connectedDevices.Count == 0)
                 {
-                    while (_headsetService.connectedDevices.Count > 0)
+                    while (_headsetService.connectedDevices.Count == 0)
                     {
                         _notifyIcon.ShowBalloonTip(2_000, "No devices found", retryText, ToolTipIcon.Info);
                         Thread.Sleep(retryDelay);
                         _headsetService.GetConnectedHeadsets();
                     }
                 }
+
+                _headsetService.GetBatteryLevel();
 
                 if (!hasBeenDisconnected && !_headsetService.isInit && !_headsetService._isConnected)
                 {
@@ -118,8 +117,6 @@ namespace ArctisBatteryMonitor
                 }
 
                 Thread.Sleep(hasBeenDisconnected ? 5_000 : refreshDelay);
-
-                _headsetService.GetBatteryLevel();
             }
         }
     }
