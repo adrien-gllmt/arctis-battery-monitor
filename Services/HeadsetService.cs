@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using HidSharp;
+﻿using HidSharp;
 
-namespace arctis_battery_monitor.Services
+namespace ArctisBatteryMonitor.Services
 {
     internal class HeadsetService
     {

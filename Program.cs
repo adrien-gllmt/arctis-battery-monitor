@@ -1,4 +1,4 @@
-namespace arctis_battery_monitor
+namespace ArctisBatteryMonitor
 {
     internal static class Program
     {

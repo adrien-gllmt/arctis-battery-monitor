@@ -1,13 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Text;
-using System.Timers;
-using arctis_battery_monitor.Services;
+﻿using System.ComponentModel;
+using ArctisBatteryMonitor.Services;
 using Timer = System.Timers.Timer;
 
-namespace arctis_battery_monitor
+namespace ArctisBatteryMonitor
 {
     internal class BatteryMonitor : ApplicationContext
     {
@@ -77,9 +72,9 @@ namespace arctis_battery_monitor
             while (!HeadsetServiceWorker.CancellationPending)
             {
 
-                if (_headsetService.connectedDevices is null)
+                if (_headsetService.connectedDevices.Count > 0)
                 {
-                    while (_headsetService.connectedDevices is null)
+                    while (_headsetService.connectedDevices.Count > 0)
                     {
                         _notifyIcon.ShowBalloonTip(2_000, "No devices found", retryText, ToolTipIcon.Info);
                         Thread.Sleep(retryDelay);
