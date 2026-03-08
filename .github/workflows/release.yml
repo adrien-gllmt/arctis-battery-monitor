@@ -55,6 +55,6 @@ jobs:
 
       - name: Set release notes
         shell: bash
-        run: gh release edit ${{ github.ref_name }} --notes "${{ steps.changelog.outputs.notes }}"
+        run: gh release edit ${{ github.ref_name }} --draft=false --notes "${{ steps.changelog.outputs.notes }}"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
