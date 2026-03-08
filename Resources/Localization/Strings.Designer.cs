@@ -117,6 +117,24 @@ namespace ArctisBatteryMonitor.Resources.Localization {
             }
         }
 
+        internal static string MenuUpdates {
+            get {
+                return ResourceManager.GetString("MenuUpdates", resourceCulture);
+            }
+        }
+
+        internal static string MenuCheckForUpdates {
+            get {
+                return ResourceManager.GetString("MenuCheckForUpdates", resourceCulture);
+            }
+        }
+
+        internal static string MenuUpdateAvailable {
+            get {
+                return ResourceManager.GetString("MenuUpdateAvailable", resourceCulture);
+            }
+        }
+
         internal static string MenuExit {
             get {
                 return ResourceManager.GetString("MenuExit", resourceCulture);
@@ -158,6 +176,30 @@ namespace ArctisBatteryMonitor.Resources.Localization {
         internal static string NotifDisconnectedTitle {
             get {
                 return ResourceManager.GetString("NotifDisconnectedTitle", resourceCulture);
+            }
+        }
+
+        internal static string NotifUpdateTitle {
+            get {
+                return ResourceManager.GetString("NotifUpdateTitle", resourceCulture);
+            }
+        }
+
+        internal static string NotifUpdateMessage {
+            get {
+                return ResourceManager.GetString("NotifUpdateMessage", resourceCulture);
+            }
+        }
+
+        internal static string NotifUpToDateTitle {
+            get {
+                return ResourceManager.GetString("NotifUpToDateTitle", resourceCulture);
+            }
+        }
+
+        internal static string NotifUpToDateMessage {
+            get {
+                return ResourceManager.GetString("NotifUpToDateMessage", resourceCulture);
             }
         }
     }
