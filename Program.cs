@@ -25,21 +25,13 @@ namespace ArctisBatteryMonitor
 
             var settingsService = new SettingsService();
             StartupService.Apply(settingsService.Settings.StartWithWindows);
-            ApplyCulture(settingsService.Settings.Language);
+            SettingsService.ApplyCulture(settingsService.Settings.Language);
 
             ApplicationConfiguration.Initialize();
             Application.Run(new BatteryMonitor(settingsService));
 
             Log.Information("Application exiting");
             Log.CloseAndFlush();
-        }
-
-        private static void ApplyCulture(string? language)
-        {
-            if (string.IsNullOrEmpty(language)) return;
-            var culture = new CultureInfo(language);
-            Thread.CurrentThread.CurrentUICulture = culture;
-            CultureInfo.DefaultThreadCurrentUICulture = culture;
         }
 
         private static void OnThreadException(object sender, ThreadExceptionEventArgs e)

@@ -1,27 +1,10 @@
+using System.Globalization;
 using System.Text.Json;
+using ArctisBatteryMonitor.Models;
 using Serilog;
 
 namespace ArctisBatteryMonitor.Services
 {
-    internal class AppSettings
-    {
-        public bool NotifyNoDevice { get; set; }
-        public bool NotifyConnected { get; set; }
-        public bool NotifyDisconnected { get; set; }
-        public int? PreferredDeviceProductId { get; set; }
-        public string? Language { get; set; }
-        public bool StartWithWindows { get; set; } = true;
-    }
-
-    internal class TimingConfig
-    {
-        public int RetryDelayMs { get; set; } = 15_000;
-        public int RefreshDelayMs { get; set; } = 30_000;
-        public int DisconnectedRefreshDelayMs { get; set; } = 5_000;
-        public int AnimationIntervalMs { get; set; } = 300;
-        public int AnimationFrames { get; set; } = 4;
-    }
-
     internal class SettingsService
     {
         private static readonly string SettingsDir = Path.Combine(
@@ -97,6 +80,20 @@ namespace ArctisBatteryMonitor.Services
             {
                 Log.Error(ex, "Failed to save settings to {Path}", SettingsPath);
             }
+        }
+
+        public static void ApplyCulture(string? language)
+        {
+            if (string.IsNullOrEmpty(language))
+            {
+                CultureInfo.DefaultThreadCurrentUICulture = null;
+                Thread.CurrentThread.CurrentUICulture = CultureInfo.InstalledUICulture;
+                return;
+            }
+
+            var culture = new CultureInfo(language);
+            Thread.CurrentThread.CurrentUICulture = culture;
+            CultureInfo.DefaultThreadCurrentUICulture = culture;
         }
     }
 }
