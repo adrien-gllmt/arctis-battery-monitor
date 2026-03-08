@@ -31,8 +31,14 @@ Don't bother opening SteelSeries GG to check on your battery level ever again ! 
 | Arctis Nova 5 | Not tested |
 | Arctis Nova 5X | Not tested |
 
-Once installed, ABM starts on computer start and will display in the system notification tray :  
-<img width="217" height="182" alt="image" src="https://github.com/user-attachments/assets/ddf217cf-438c-4053-a2ec-104b1bc77168" />  
+Once installed, ABM starts on computer start and will display in the system notification tray. 
+> [!NOTE]
+> The tray icon may be hidden in the overflow area (the ^ arrow in the taskbar). Drag it to
+the taskbar to keep it visible permanently.
+  
+Right click the icon to access menu :  
+<img width="217" height="182" alt="image" src="https://github.com/user-attachments/assets/ddf217cf-438c-4053-a2ec-104b1bc77168" />
+  
 If you only have one headset you probably won't need to do anything. As long as no headset is detected or successfully connnected, ABM will retry every 15 seconds.  
 
 
