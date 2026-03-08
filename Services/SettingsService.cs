@@ -9,7 +9,12 @@ namespace ArctisBatteryMonitor.Services
     {
         private static readonly string SettingsDir = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "ArctisBatteryMonitor");
+#if DEBUG
+            "ArctisBatteryMonitor-dev"
+#else
+            "ArctisBatteryMonitor"
+#endif
+        );
 
         private static readonly string SettingsPath = Path.Combine(SettingsDir, "settings.json");
 
