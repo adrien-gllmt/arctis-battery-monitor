@@ -17,7 +17,7 @@ namespace ArctisBatteryMonitor
         private readonly NotifyIcon _notifyIcon = new()
         {
             Text = "Arctis Battery Monitor",
-            ContextMenuStrip = new ContextMenuStrip { Renderer = Renderer, ShowImageMargin = false }
+            ContextMenuStrip = new ContextMenuStrip { Renderer = Renderer, ShowImageMargin = false, ShowCheckMargin = true }
         };
 
         private readonly HeadsetService _headsetService = new();
@@ -39,6 +39,7 @@ namespace ArctisBatteryMonitor
         private readonly ToolStripMenuItem _languageSystemItem;
         private readonly ToolStripMenuItem _languageEnglishItem;
         private readonly ToolStripMenuItem _languageFrenchItem;
+        private readonly ToolStripMenuItem _startWithWindowsItem;
         private readonly ToolStripMenuItem _exitItem;
 
         private CancellationTokenSource _cts = new();
@@ -107,6 +108,9 @@ namespace ArctisBatteryMonitor
             _reconnectItem = new ToolStripMenuItem(Strings.MenuReconnect);
             _reconnectItem.Click += OnReconnect;
 
+            _startWithWindowsItem = new ToolStripMenuItem(Strings.MenuStartWithWindows) { Checked = settings.StartWithWindows, CheckOnClick = true };
+            _startWithWindowsItem.CheckedChanged += OnToggleStartWithWindows;
+
             _exitItem = new ToolStripMenuItem(Strings.MenuExit);
             _exitItem.Click += OnExit;
 
@@ -114,6 +118,7 @@ namespace ArctisBatteryMonitor
             _notifyIcon.ContextMenuStrip.Items.Add(_selectHeadsetMenu);
             _notifyIcon.ContextMenuStrip.Items.Add(_notificationsMenu);
             _notifyIcon.ContextMenuStrip.Items.Add(_languageMenu);
+            _notifyIcon.ContextMenuStrip.Items.Add(_startWithWindowsItem);
             _notifyIcon.ContextMenuStrip.Items.Add(new ToolStripSeparator());
             _notifyIcon.ContextMenuStrip.Items.Add(_exitItem);
 
@@ -150,6 +155,13 @@ namespace ArctisBatteryMonitor
             Log.Information("Language changed to {Language}", language ?? "system");
         }
 
+        private void OnToggleStartWithWindows(object? sender, EventArgs e)
+        {
+            _settingsService.Settings.StartWithWindows = _startWithWindowsItem.Checked;
+            _settingsService.Save();
+            StartupService.Apply(_startWithWindowsItem.Checked);
+        }
+
         private void RefreshMenuTexts()
         {
             _reconnectItem.Text = Strings.MenuReconnect;
@@ -161,6 +173,7 @@ namespace ArctisBatteryMonitor
             _notifDisconnected.Text = Strings.MenuNotifDisconnected;
             _languageMenu.Text = Strings.MenuLanguage;
             _languageSystemItem.Text = Strings.MenuLanguageSystem;
+            _startWithWindowsItem.Text = Strings.MenuStartWithWindows;
             _exitItem.Text = Strings.MenuExit;
 
             // Refresh "No device found" placeholder in headset submenu if currently shown
