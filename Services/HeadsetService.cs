@@ -35,6 +35,8 @@ namespace ArctisBatteryMonitor.Services
             new("Arctis Nova 5X", 0x2253, [0x00, 0xb0])
         ];
 
+        public int? PreferredProductId { get; set; }
+
         private HeadsetInfo? _chosenDevice;
         public HeadsetInfo? ChosenDevice => _chosenDevice;
 
@@ -57,7 +59,8 @@ namespace ArctisBatteryMonitor.Services
 
             if (_connectedDevices.Count > 0)
             {
-                _chosenDevice = _connectedDevices[0];
+                _chosenDevice = _connectedDevices.FirstOrDefault(d => d.ProductId == PreferredProductId)
+                                ?? _connectedDevices[0];
                 Log.Information("Selected device: {Name}, {Count} total found", _chosenDevice.Name, _connectedDevices.Count);
             }
             else
@@ -77,7 +80,6 @@ namespace ArctisBatteryMonitor.Services
             }
 
             var devices = DeviceList.Local.GetHidDevices(VendorId, _chosenDevice.ProductId);
-            bool isConnected = false;
 
             foreach (var device in devices)
             {
@@ -97,23 +99,18 @@ namespace ArctisBatteryMonitor.Services
                         var inputBuffer = new byte[device.GetMaxInputReportLength()];
                         int bytesRead = hidStream.Read(inputBuffer);
 
-                        if (bytesRead > 0)
+                        if (bytesRead > 0 && inputBuffer[ChargingStatusIndex] != 0)
                         {
-                            isConnected = inputBuffer[ChargingStatusIndex] != 0;
-
-                            if (isConnected)
+                            double batteryLevel = (inputBuffer[BatteryLevelIndex] / BatteryMaxRaw) * 100.0;
+                            string chargingStatus = inputBuffer[ChargingStatusIndex] switch
                             {
-                                double batteryLevel = (inputBuffer[BatteryLevelIndex] / BatteryMaxRaw) * 100.0;
-                                string chargingStatus = inputBuffer[ChargingStatusIndex] switch
-                                {
-                                    1 => "Charging",
-                                    3 => "Discharging",
-                                    _ => "Disconnected"
-                                };
+                                1 => "Charging",
+                                3 => "Discharging",
+                                _ => "Disconnected"
+                            };
 
-                                Log.Debug("{Name}: battery {Battery}%, {Status}", _chosenDevice.Name, batteryLevel, chargingStatus);
-                                return new HeadsetStatus(HeadsetState.Connected, _chosenDevice, batteryLevel, chargingStatus);
-                            }
+                            Log.Debug("{Name}: battery {Battery}%, {Status}", _chosenDevice.Name, batteryLevel, chargingStatus);
+                            return new HeadsetStatus(HeadsetState.Connected, _chosenDevice, batteryLevel, chargingStatus);
                         }
                     }
                     catch (Exception ex)
