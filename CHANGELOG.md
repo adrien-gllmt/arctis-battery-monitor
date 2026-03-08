@@ -8,4 +8,4 @@
 - Notifications for connection, disconnection and multiple devices
 - Language support (English, French)
 - Start with Windows option
-- Automatic updates via GitHub Releases
+- Automatic update check via GitHub Releases, manually apply
