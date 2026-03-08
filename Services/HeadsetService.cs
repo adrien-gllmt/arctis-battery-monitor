@@ -129,6 +129,12 @@ namespace ArctisBatteryMonitor.Services
                 : new HeadsetStatus(HeadsetState.Searching, null, 0, "Disconnected");
         }
 
+        public void SelectDevice(HeadsetInfo device)
+        {
+            Log.Information("User selected device: {Name}", device.Name);
+            _chosenDevice = device;
+        }
+
         public void Reset()
         {
             Log.Debug("HeadsetService reset");

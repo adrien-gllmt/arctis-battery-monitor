@@ -27,11 +27,13 @@ namespace ArctisBatteryMonitor
         private readonly ToolStripMenuItem _notifConnected;
         private readonly ToolStripMenuItem _notifDisconnected;
         private readonly ToolStripMenuItem _notifAll;
+        private readonly ToolStripMenuItem _selectHeadsetMenu;
 
         private CancellationTokenSource _cts = new();
         private HeadsetState _currentState = HeadsetState.Searching;
         private int _animationFrame = 1;
         private bool _searchNotificationShown;
+        private int _lastKnownDeviceCount = -1;
 
         public BatteryMonitor()
         {
@@ -68,7 +70,11 @@ namespace ArctisBatteryMonitor
                     args.Cancel = true;
             };
 
+            _selectHeadsetMenu = new ToolStripMenuItem("Select headset") { Visible = false };
+            _selectHeadsetMenu.DropDown.Renderer = Renderer;
+
             _notifyIcon.ContextMenuStrip.Items.Add("Reconnect", null, OnReconnect);
+            _notifyIcon.ContextMenuStrip.Items.Add(_selectHeadsetMenu);
             _notifyIcon.ContextMenuStrip.Items.Add(notificationsMenu);
             _notifyIcon.ContextMenuStrip.Items.Add(new ToolStripSeparator());
             _notifyIcon.ContextMenuStrip.Items.Add("Exit", null, OnExit);
@@ -140,11 +146,50 @@ namespace ArctisBatteryMonitor
             _animationFrame = _animationFrame % _timing.AnimationFrames + 1;
         }
 
+        private void RebuildHeadsetSubmenuIfNeeded()
+        {
+            var devices = _headsetService.ConnectedDevices;
+            if (devices.Count == _lastKnownDeviceCount) return;
+
+            _lastKnownDeviceCount = devices.Count;
+            _selectHeadsetMenu.Visible = devices.Count > 1;
+            _selectHeadsetMenu.DropDownItems.Clear();
+
+            foreach (var device in devices)
+            {
+                var item = new ToolStripMenuItem(device.Name)
+                {
+                    Checked = device == _headsetService.ChosenDevice,
+                    CheckOnClick = false
+                };
+                var captured = device;
+                item.Click += (_, _) => OnSelectHeadset(captured);
+                _selectHeadsetMenu.DropDownItems.Add(item);
+            }
+        }
+
+        private void OnSelectHeadset(HeadsetInfo device)
+        {
+            Log.Information("User selected headset: {Name}", device.Name);
+            _headsetService.SelectDevice(device);
+
+            foreach (ToolStripMenuItem item in _selectHeadsetMenu.DropDownItems)
+                item.Checked = item.Text == device.Name;
+
+            _cts.Cancel();
+            _cts.Dispose();
+            _cts = new CancellationTokenSource();
+            _currentState = HeadsetState.Connecting;
+            _animationTimer.Start();
+            _ = MonitorLoopAsync(_cts.Token);
+        }
+
         private async Task MonitorLoopAsync(CancellationToken ct)
         {
             while (!ct.IsCancellationRequested)
             {
                 var status = _headsetService.GetStatus();
+                RebuildHeadsetSubmenuIfNeeded();
                 var previousState = _currentState;
 
                 switch (status.State)
@@ -239,6 +284,7 @@ namespace ArctisBatteryMonitor
             _headsetService.Reset();
             _currentState = HeadsetState.Searching;
             _searchNotificationShown = false;
+            _lastKnownDeviceCount = -1;
             _animationTimer.Start();
 
             _ = MonitorLoopAsync(_cts.Token);
