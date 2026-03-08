@@ -1,5 +1,6 @@
 ﻿using ArctisBatteryMonitor.Models;
 using ArctisBatteryMonitor.Services;
+using ArctisBatteryMonitor.UI;
 using Timer = System.Windows.Forms.Timer;
 
 namespace ArctisBatteryMonitor
@@ -8,10 +9,12 @@ namespace ArctisBatteryMonitor
     {
         private readonly TimingConfig _timing;
 
+        private static readonly MenuRenderer Renderer = new();
+
         private readonly NotifyIcon _notifyIcon = new()
         {
             Text = "Arctis Battery Monitor",
-            ContextMenuStrip = new ContextMenuStrip()
+            ContextMenuStrip = new ContextMenuStrip { Renderer = Renderer, ShowImageMargin = false }
         };
 
         private readonly HeadsetService _headsetService = new();
@@ -57,6 +60,7 @@ namespace ArctisBatteryMonitor
             notificationsMenu.DropDownItems.Add(_notifConnected);
             notificationsMenu.DropDownItems.Add(_notifDisconnected);
 
+            notificationsMenu.DropDown.Renderer = Renderer;
             notificationsMenu.DropDown.Closing += (_, args) =>
             {
                 if (args.CloseReason == ToolStripDropDownCloseReason.ItemClicked)
