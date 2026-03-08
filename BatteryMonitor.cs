@@ -99,6 +99,9 @@ namespace ArctisBatteryMonitor
 
             _lastKnownDeviceCount = devices.Count;
             _lastChosenDevice = chosen;
+
+            foreach (ToolStripItem item in _menu.SelectHeadsetMenu.DropDownItems)
+                item.Dispose();
             _menu.SelectHeadsetMenu.DropDownItems.Clear();
 
             if (devices.Count == 0)
@@ -250,6 +253,7 @@ namespace ArctisBatteryMonitor
 
             _notifyIcon.Visible = false;
             _notifyIcon.Dispose();
+            _notifyIcon.ContextMenuStrip?.Dispose();
 
             _iconCache.Dispose();
 
