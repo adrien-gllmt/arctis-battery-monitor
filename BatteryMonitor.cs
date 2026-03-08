@@ -1,5 +1,5 @@
 using System.Globalization;
-using ArctisBatteryMonitor.Localization;
+using ArctisBatteryMonitor.Resources.Localization;
 using ArctisBatteryMonitor.Models;
 using ArctisBatteryMonitor.Services;
 using ArctisBatteryMonitor.UI;
