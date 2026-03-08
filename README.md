@@ -14,6 +14,5 @@ By right clicking you will access the app menu :
 
 --------------------------
 ## What is coming ?  
-- Manage multiple devices (as of now defaults to the first one found)  
 - i18n  
 - Installer & GH releases  
