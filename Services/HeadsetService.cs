@@ -1,127 +1,123 @@
-﻿using HidSharp;
+﻿using ArctisBatteryMonitor.Models;
+using HidSharp;
 
 namespace ArctisBatteryMonitor.Services
 {
     internal class HeadsetService
     {
-        public List<(string Name, int ProductId, byte[] outputBuffer)> connectedDevices = [];
-        private static readonly List<(string name, int productId, byte[] outputBuffer)> _knownHeadsets =
+        private const int VendorId = 0x1038;
+        private const int BatteryLevelIndex = 3;
+        private const int ChargingStatusIndex = 4;
+        private const double BatteryMaxRaw = 4.0;
+
+        private static readonly List<HeadsetInfo> KnownHeadsets =
         [
-            ("Arctis Pro Wireless", 0x1290, [0x40, 0xaa]),
-            ("Arctis 7 2017", 0x1260, [0x06, 0x18]),
-            ("Arctis 7 2019", 0x12ad, [0x06, 0x18]),
-            ("Arctis Pro 2019", 0x1252, [0x06, 0x18]),
-            ("Arctis Pro GameDac", 0x1280, [0x06, 0x18]),
-            ("Arctis 9", 0x12c2, [0x00, 0x20]),
-            ("Arctis 1 Wireless", 0x12b3, [0x06, 0x12]),
-            ("Arctis 1 Xbox", 0x12b6, [0x06, 0x12]),
-            ("Arctis 7X", 0x12d7, [0x06, 0x12]),
-            ("Arctis 7+", 0x220e, [0x00, 0xb0]),
-            ("Arctis 7P+", 0x2212, [0x00, 0xb0]),
-            ("Arctis 7X+", 0x2216, [0x00, 0xb0]),
-            ("Arctis 7 Destiny Plus", 0x2236, [0x00, 0xb0]),
-            ("Arctis Nova 7", 0x2202, [0x00, 0xb0]),
-            ("Arctis Nova 7X", 0x2206, [0x00, 0xb0]),
-            ("Arctis Nova 7X v2", 0x2258, [0x00, 0xb0]),
-            ("Arctis Nova 7P", 0x220a, [0x00, 0xb0]),
-            ("Arctis Nova 7 Diablo IV", 0x223a, [0x00, 0xb0]),
-            ("Arctis Nova 5", 0x2232, [0x00, 0xb0]),
-            ("Arctis Nova 5X", 0x2253, [0x00, 0xb0])
+            new("Arctis Pro Wireless", 0x1290, [0x40, 0xaa]),
+            new("Arctis 7 2017", 0x1260, [0x06, 0x18]),
+            new("Arctis 7 2019", 0x12ad, [0x06, 0x18]),
+            new("Arctis Pro 2019", 0x1252, [0x06, 0x18]),
+            new("Arctis Pro GameDac", 0x1280, [0x06, 0x18]),
+            new("Arctis 9", 0x12c2, [0x00, 0x20]),
+            new("Arctis 1 Wireless", 0x12b3, [0x06, 0x12]),
+            new("Arctis 1 Xbox", 0x12b6, [0x06, 0x12]),
+            new("Arctis 7X", 0x12d7, [0x06, 0x12]),
+            new("Arctis 7+", 0x220e, [0x00, 0xb0]),
+            new("Arctis 7P+", 0x2212, [0x00, 0xb0]),
+            new("Arctis 7X+", 0x2216, [0x00, 0xb0]),
+            new("Arctis 7 Destiny Plus", 0x2236, [0x00, 0xb0]),
+            new("Arctis Nova 7", 0x2202, [0x00, 0xb0]),
+            new("Arctis Nova 7X", 0x2206, [0x00, 0xb0]),
+            new("Arctis Nova 7X v2", 0x2258, [0x00, 0xb0]),
+            new("Arctis Nova 7P", 0x220a, [0x00, 0xb0]),
+            new("Arctis Nova 7 Diablo IV", 0x223a, [0x00, 0xb0]),
+            new("Arctis Nova 5", 0x2232, [0x00, 0xb0]),
+            new("Arctis Nova 5X", 0x2253, [0x00, 0xb0])
         ];
 
-        private static readonly int _vendorId = 0x1038;
+        private HeadsetInfo? _chosenDevice;
+        public HeadsetInfo? ChosenDevice => _chosenDevice;
 
-        private (string name, int productId, byte[] outputBuffer) _chosenDevice;
-        public (string name, int productId, byte[] outputBuffer) ChosenDevice { get => _chosenDevice; }
-        private HidDevice? _device;
+        private List<HeadsetInfo> _connectedDevices = [];
+        public IReadOnlyList<HeadsetInfo> ConnectedDevices => _connectedDevices;
 
-        public bool _isConnected = false;
-        public bool isInit = false;
-
-        public double batteryLevel;
-        public string chargingStatus = "Disconnected";
-
-        public HeadsetService()
+        public void ScanForDevices()
         {
-            GetConnectedHeadsets();
-            _chosenDevice = connectedDevices.First();
-        }
+            _connectedDevices.Clear();
 
-        public void GetConnectedHeadsets() {
-            foreach ((string Name, int ProductId, byte[] outputBuffer) in _knownHeadsets)
+            foreach (var headset in KnownHeadsets)
             {
-                if (DeviceList.Local.GetHidDevices(_vendorId, ProductId).Any())
+                if (DeviceList.Local.GetHidDevices(VendorId, headset.ProductId).Any())
                 {
-                    connectedDevices.Clear();
-                    connectedDevices.Add((Name, ProductId, outputBuffer));
+                    _connectedDevices.Add(headset);
                 }
             }
+
+            if (_connectedDevices.Count > 0)
+                _chosenDevice = _connectedDevices[0];
         }
 
-        private void ScanInterfaces(IEnumerable<HidDevice> chosenDevice)
+        public HeadsetStatus GetStatus()
         {
-            foreach (var device in chosenDevice) {
-                if (device is null) continue;
+            if (_chosenDevice is null)
+            {
+                ScanForDevices();
 
-                if (device.TryOpen(out HidStream hidStream))
+                if (_chosenDevice is null)
+                    return new HeadsetStatus(HeadsetState.Searching, null, 0, "Disconnected");
+            }
+
+            var devices = DeviceList.Local.GetHidDevices(VendorId, _chosenDevice.ProductId);
+            bool isConnected = false;
+
+            foreach (var device in devices)
+            {
+                if (!device.TryOpen(out HidStream? hidStream))
+                    continue;
+
+                using (hidStream)
                 {
-                    byte[] inputBuffer;
                     try
                     {
-                        WriteOutputReport(hidStream);
+                        hidStream.Write(_chosenDevice.OutputBuffer, 0, _chosenDevice.OutputBuffer.Length);
                         hidStream.ReadTimeout = 1000;
-                        inputBuffer = new byte[device.GetMaxInputReportLength()];
+
+                        var inputBuffer = new byte[device.GetMaxInputReportLength()];
                         int bytesRead = hidStream.Read(inputBuffer);
+
+                        if (bytesRead > 0)
+                        {
+                            isConnected = inputBuffer[ChargingStatusIndex] != 0;
+
+                            if (isConnected)
+                            {
+                                double batteryLevel = (inputBuffer[BatteryLevelIndex] / BatteryMaxRaw) * 100.0;
+                                string chargingStatus = inputBuffer[ChargingStatusIndex] switch
+                                {
+                                    1 => "Charging",
+                                    3 => "Discharging",
+                                    _ => "Disconnected"
+                                };
+
+                                return new HeadsetStatus(HeadsetState.Connected, _chosenDevice, batteryLevel, chargingStatus);
+                            }
+                        }
                     }
-                    catch (Exception)
+                    catch
                     {
-                        hidStream.Close();
                         continue;
                     }
-
-                    hidStream.Close();
-                    _device = device;
-                    _isConnected = inputBuffer[4] == 0 ? false : true;
-                    break;
                 }
             }
+
+            return _chosenDevice is not null
+                ? new HeadsetStatus(HeadsetState.Connecting, _chosenDevice, 0, "Disconnected")
+                : new HeadsetStatus(HeadsetState.Searching, null, 0, "Disconnected");
         }
 
-        private void WriteOutputReport(HidStream hidStream)
+        public void Reset()
         {
-            hidStream.Write(_chosenDevice.outputBuffer, 0, _chosenDevice.outputBuffer.Length);
-        }
-
-        private void ReadInputReport(HidDevice device, HidStream hidStream)
-        {
-            byte[] inputBuffer = new byte[device.GetMaxInputReportLength()];
-            int bytesRead = hidStream.Read(inputBuffer);
-            if (bytesRead > 0)
-            {
-                batteryLevel = (inputBuffer[3] / 4.0) * 100.0;
-                chargingStatus = inputBuffer[4] switch
-                {
-                    1 => "Charging",
-                    3 => "Discharging",
-                    _ => "Disconnected"
-                };
-            }
-        }
-
-        public void GetBatteryLevel()
-        {
-            ScanInterfaces(DeviceList.Local.GetHidDevices(_vendorId, _chosenDevice.productId));
-
-            if (_device is null || !_isConnected) {
-                chargingStatus = "Disconnected";
-                return;
-            }
-
-            if(_device.TryOpen(out HidStream hidStream))
-            {
-                WriteOutputReport(hidStream);
-                ReadInputReport(_device, hidStream);
-            }
+            _chosenDevice = null;
+            _connectedDevices.Clear();
         }
     }
 }

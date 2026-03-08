@@ -1,0 +1,7 @@
+{
+  "RetryDelayMs": 15000,
+  "RefreshDelayMs": 30000,
+  "DisconnectedRefreshDelayMs": 5000,
+  "AnimationIntervalMs": 300,
+  "AnimationFrames": 4
+}
