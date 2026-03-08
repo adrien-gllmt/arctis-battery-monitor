@@ -8,6 +8,7 @@ namespace ArctisBatteryMonitor.Services
         public bool NotifyNoDevice { get; set; }
         public bool NotifyConnected { get; set; }
         public bool NotifyDisconnected { get; set; }
+        public int? PreferredDeviceProductId { get; set; }
     }
 
     internal class TimingConfig
