@@ -1,3 +1,5 @@
+using System.Globalization;
+using ArctisBatteryMonitor.Services;
 using Serilog;
 
 namespace ArctisBatteryMonitor
@@ -21,11 +23,22 @@ namespace ArctisBatteryMonitor
 
             Log.Information("Application starting");
 
+            var settingsService = new SettingsService();
+            ApplyCulture(settingsService.Settings.Language);
+
             ApplicationConfiguration.Initialize();
-            Application.Run(new BatteryMonitor());
+            Application.Run(new BatteryMonitor(settingsService));
 
             Log.Information("Application exiting");
             Log.CloseAndFlush();
+        }
+
+        private static void ApplyCulture(string? language)
+        {
+            if (string.IsNullOrEmpty(language)) return;
+            var culture = new CultureInfo(language);
+            Thread.CurrentThread.CurrentUICulture = culture;
+            CultureInfo.DefaultThreadCurrentUICulture = culture;
         }
 
         private static void OnThreadException(object sender, ThreadExceptionEventArgs e)

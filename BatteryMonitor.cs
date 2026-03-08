@@ -1,4 +1,6 @@
-﻿using ArctisBatteryMonitor.Models;
+using System.Globalization;
+using ArctisBatteryMonitor.Resources.Localization;
+using ArctisBatteryMonitor.Models;
 using ArctisBatteryMonitor.Services;
 using ArctisBatteryMonitor.UI;
 using Serilog;
@@ -19,15 +21,25 @@ namespace ArctisBatteryMonitor
         };
 
         private readonly HeadsetService _headsetService = new();
-        private readonly SettingsService _settingsService = new();
+        private readonly SettingsService _settingsService;
         private readonly Timer _animationTimer = new();
         private readonly Dictionary<string, Icon> _iconCache = new();
 
+        // Notification submenu items
         private readonly ToolStripMenuItem _notifNoDevice;
         private readonly ToolStripMenuItem _notifConnected;
         private readonly ToolStripMenuItem _notifDisconnected;
         private readonly ToolStripMenuItem _notifAll;
+
+        // Top-level menu items (kept for in-place text refresh)
+        private readonly ToolStripMenuItem _reconnectItem;
         private readonly ToolStripMenuItem _selectHeadsetMenu;
+        private readonly ToolStripMenuItem _notificationsMenu;
+        private readonly ToolStripMenuItem _languageMenu;
+        private readonly ToolStripMenuItem _languageSystemItem;
+        private readonly ToolStripMenuItem _languageEnglishItem;
+        private readonly ToolStripMenuItem _languageFrenchItem;
+        private readonly ToolStripMenuItem _exitItem;
 
         private CancellationTokenSource _cts = new();
         private HeadsetState _currentState = HeadsetState.Searching;
@@ -36,8 +48,11 @@ namespace ArctisBatteryMonitor
         private int _lastKnownDeviceCount = -1;
         private HeadsetInfo? _lastChosenDevice;
 
-        public BatteryMonitor()
+        private bool _suppressToggleEvents;
+
+        public BatteryMonitor(SettingsService settingsService)
         {
+            _settingsService = settingsService;
             _timing = _settingsService.Timing;
             _headsetService.PreferredProductId = _settingsService.Settings.PreferredDeviceProductId;
             _animationTimer.Interval = _timing.AnimationIntervalMs;
@@ -46,40 +61,61 @@ namespace ArctisBatteryMonitor
 
             var settings = _settingsService.Settings;
 
-            _notifNoDevice = new ToolStripMenuItem("No device found") { Checked = settings.NotifyNoDevice, CheckOnClick = true };
-            _notifConnected = new ToolStripMenuItem("Connected") { Checked = settings.NotifyConnected, CheckOnClick = true };
-            _notifDisconnected = new ToolStripMenuItem("Disconnected") { Checked = settings.NotifyDisconnected, CheckOnClick = true };
+            _notifNoDevice = new ToolStripMenuItem(Strings.NoDeviceFound) { Checked = settings.NotifyNoDevice, CheckOnClick = true };
+            _notifConnected = new ToolStripMenuItem(Strings.MenuNotifConnected) { Checked = settings.NotifyConnected, CheckOnClick = true };
+            _notifDisconnected = new ToolStripMenuItem(Strings.MenuNotifDisconnected) { Checked = settings.NotifyDisconnected, CheckOnClick = true };
 
             bool allEnabled = settings.NotifyNoDevice && settings.NotifyConnected && settings.NotifyDisconnected;
-            _notifAll = new ToolStripMenuItem("Enable all") { Checked = allEnabled, CheckOnClick = true };
+            _notifAll = new ToolStripMenuItem(Strings.MenuNotifEnableAll) { Checked = allEnabled, CheckOnClick = true };
 
             _notifAll.CheckedChanged += OnToggleAll;
             _notifNoDevice.CheckedChanged += OnToggleIndividual;
             _notifConnected.CheckedChanged += OnToggleIndividual;
             _notifDisconnected.CheckedChanged += OnToggleIndividual;
 
-            var notificationsMenu = new ToolStripMenuItem("Notifications");
-            notificationsMenu.DropDownItems.Add(_notifAll);
-            notificationsMenu.DropDownItems.Add(new ToolStripSeparator());
-            notificationsMenu.DropDownItems.Add(_notifNoDevice);
-            notificationsMenu.DropDownItems.Add(_notifConnected);
-            notificationsMenu.DropDownItems.Add(_notifDisconnected);
-
-            notificationsMenu.DropDown.Renderer = Renderer;
-            notificationsMenu.DropDown.Closing += (_, args) =>
+            _notificationsMenu = new ToolStripMenuItem(Strings.MenuNotifications);
+            _notificationsMenu.DropDownItems.Add(_notifAll);
+            _notificationsMenu.DropDownItems.Add(new ToolStripSeparator());
+            _notificationsMenu.DropDownItems.Add(_notifNoDevice);
+            _notificationsMenu.DropDownItems.Add(_notifConnected);
+            _notificationsMenu.DropDownItems.Add(_notifDisconnected);
+            _notificationsMenu.DropDown.Renderer = Renderer;
+            _notificationsMenu.DropDown.Closing += (_, args) =>
             {
                 if (args.CloseReason == ToolStripDropDownCloseReason.ItemClicked)
                     args.Cancel = true;
             };
 
-            _selectHeadsetMenu = new ToolStripMenuItem("Select headset");
+            _selectHeadsetMenu = new ToolStripMenuItem(Strings.MenuSelectHeadset);
             _selectHeadsetMenu.DropDown.Renderer = Renderer;
 
-            _notifyIcon.ContextMenuStrip.Items.Add("Reconnect", null, OnReconnect);
+            var current = settings.Language;
+            _languageSystemItem = new ToolStripMenuItem(Strings.MenuLanguageSystem) { Checked = string.IsNullOrEmpty(current), CheckOnClick = false };
+            _languageEnglishItem = new ToolStripMenuItem("English") { Checked = current == "en", CheckOnClick = false };
+            _languageFrenchItem = new ToolStripMenuItem("Français") { Checked = current == "fr", CheckOnClick = false };
+            _languageSystemItem.Click += (_, _) => OnSelectLanguage(null);
+            _languageEnglishItem.Click += (_, _) => OnSelectLanguage("en");
+            _languageFrenchItem.Click += (_, _) => OnSelectLanguage("fr");
+
+            _languageMenu = new ToolStripMenuItem(Strings.MenuLanguage);
+            _languageMenu.DropDown.Renderer = Renderer;
+            _languageMenu.DropDownItems.Add(_languageSystemItem);
+            _languageMenu.DropDownItems.Add(new ToolStripSeparator());
+            _languageMenu.DropDownItems.Add(_languageEnglishItem);
+            _languageMenu.DropDownItems.Add(_languageFrenchItem);
+
+            _reconnectItem = new ToolStripMenuItem(Strings.MenuReconnect);
+            _reconnectItem.Click += OnReconnect;
+
+            _exitItem = new ToolStripMenuItem(Strings.MenuExit);
+            _exitItem.Click += OnExit;
+
+            _notifyIcon.ContextMenuStrip.Items.Add(_reconnectItem);
             _notifyIcon.ContextMenuStrip.Items.Add(_selectHeadsetMenu);
-            _notifyIcon.ContextMenuStrip.Items.Add(notificationsMenu);
+            _notifyIcon.ContextMenuStrip.Items.Add(_notificationsMenu);
+            _notifyIcon.ContextMenuStrip.Items.Add(_languageMenu);
             _notifyIcon.ContextMenuStrip.Items.Add(new ToolStripSeparator());
-            _notifyIcon.ContextMenuStrip.Items.Add("Exit", null, OnExit);
+            _notifyIcon.ContextMenuStrip.Items.Add(_exitItem);
 
             _notifyIcon.Visible = true;
 
@@ -87,7 +123,50 @@ namespace ArctisBatteryMonitor
             _ = MonitorLoopAsync(_cts.Token);
         }
 
-        private bool _suppressToggleEvents;
+        private void OnSelectLanguage(string? language)
+        {
+            if (_settingsService.Settings.Language == language) return;
+
+            _settingsService.Settings.Language = language;
+            _settingsService.Save();
+
+            if (string.IsNullOrEmpty(language))
+            {
+                CultureInfo.DefaultThreadCurrentUICulture = null;
+                Thread.CurrentThread.CurrentUICulture = CultureInfo.InstalledUICulture;
+            }
+            else
+            {
+                var culture = new CultureInfo(language);
+                Thread.CurrentThread.CurrentUICulture = culture;
+                CultureInfo.DefaultThreadCurrentUICulture = culture;
+            }
+
+            _languageSystemItem.Checked = string.IsNullOrEmpty(language);
+            _languageEnglishItem.Checked = language == "en";
+            _languageFrenchItem.Checked = language == "fr";
+
+            RefreshMenuTexts();
+            Log.Information("Language changed to {Language}", language ?? "system");
+        }
+
+        private void RefreshMenuTexts()
+        {
+            _reconnectItem.Text = Strings.MenuReconnect;
+            _selectHeadsetMenu.Text = Strings.MenuSelectHeadset;
+            _notificationsMenu.Text = Strings.MenuNotifications;
+            _notifAll.Text = Strings.MenuNotifEnableAll;
+            _notifNoDevice.Text = Strings.NoDeviceFound;
+            _notifConnected.Text = Strings.MenuNotifConnected;
+            _notifDisconnected.Text = Strings.MenuNotifDisconnected;
+            _languageMenu.Text = Strings.MenuLanguage;
+            _languageSystemItem.Text = Strings.MenuLanguageSystem;
+            _exitItem.Text = Strings.MenuExit;
+
+            // Refresh "No device found" placeholder in headset submenu if currently shown
+            if (_selectHeadsetMenu.DropDownItems is [ToolStripMenuItem { Enabled: false } placeholder])
+                placeholder.Text = Strings.NoDeviceFound;
+        }
 
         private void OnToggleAll(object? sender, EventArgs e)
         {
@@ -144,7 +223,7 @@ namespace ArctisBatteryMonitor
             if (_currentState is HeadsetState.Connected or HeadsetState.Disconnected)
                 return;
 
-            _notifyIcon.Icon = GetIcon($"Resources/headset_connecting_{_animationFrame}.ico");
+            _notifyIcon.Icon = GetIcon($"Resources/Images/headset_connecting_{_animationFrame}.ico");
             _animationFrame = _animationFrame % _timing.AnimationFrames + 1;
         }
 
@@ -161,17 +240,13 @@ namespace ArctisBatteryMonitor
 
             if (devices.Count == 0)
             {
-                _selectHeadsetMenu.DropDownItems.Add(new ToolStripMenuItem("No device found") { Enabled = false });
+                _selectHeadsetMenu.DropDownItems.Add(new ToolStripMenuItem(Strings.NoDeviceFound) { Enabled = false });
                 return;
             }
 
             foreach (var device in devices)
             {
-                var item = new ToolStripMenuItem(device.Name)
-                {
-                    Checked = device == chosen,
-                    CheckOnClick = false
-                };
+                var item = new ToolStripMenuItem(device.Name) { Checked = device == chosen, CheckOnClick = false };
                 item.Click += (_, _) => OnSelectHeadset(device);
                 _selectHeadsetMenu.DropDownItems.Add(item);
             }
@@ -201,8 +276,8 @@ namespace ArctisBatteryMonitor
             while (!ct.IsCancellationRequested)
             {
                 var status = _headsetService.GetStatus();
-                RebuildHeadsetSubmenuIfNeeded();
                 var previousState = _currentState;
+                RebuildHeadsetSubmenuIfNeeded();
 
                 switch (status.State)
                 {
@@ -213,7 +288,7 @@ namespace ArctisBatteryMonitor
                         if (!_searchNotificationShown)
                         {
                             Log.Information("State -> Searching, no devices found");
-                            ShowNotification("No devices found", "Searching for devices...", ToolTipIcon.Info, _notifNoDevice);
+                            ShowNotification(Strings.NotifNoDeviceTitle, Strings.NotifNoDeviceMessage, ToolTipIcon.Info, _notifNoDevice);
                             _searchNotificationShown = true;
                         }
 
@@ -231,7 +306,7 @@ namespace ArctisBatteryMonitor
                     case HeadsetState.Connected:
                         _currentState = HeadsetState.Connected;
                         _animationTimer.Stop();
-                        _notifyIcon.Icon = GetIcon($"Resources/battery-{status.BatteryLevel}.ico");
+                        _notifyIcon.Icon = GetIcon($"Resources/Images/battery-{status.BatteryLevel}.ico");
                         _searchNotificationShown = false;
 
                         if (previousState != HeadsetState.Connected)
@@ -240,12 +315,12 @@ namespace ArctisBatteryMonitor
                                 status.Device!.Name, status.BatteryLevel, status.ChargingStatus);
 
                             string message = _headsetService.ConnectedDevices.Count > 1
-                                ? $"{_headsetService.ConnectedDevices.Count} devices found — using {status.Device.Name}"
+                                ? string.Format(Strings.NotifMultipleMessage, _headsetService.ConnectedDevices.Count, status.Device.Name)
                                 : status.Device.Name;
 
                             string title = _headsetService.ConnectedDevices.Count > 1
-                                ? "Multiple devices detected"
-                                : "Successfully connected";
+                                ? Strings.NotifMultipleTitle
+                                : Strings.NotifConnectedTitle;
 
                             ShowNotification(title, message, ToolTipIcon.Info, _notifConnected);
                         }
@@ -264,12 +339,12 @@ namespace ArctisBatteryMonitor
         private void HandleDisconnected(HeadsetStatus status, HeadsetState previousState)
         {
             _currentState = HeadsetState.Disconnected;
-            _notifyIcon.Icon = GetIcon("Resources/headset_disconnected.ico");
+            _notifyIcon.Icon = GetIcon("Resources/Images/headset_disconnected.ico");
 
             if (previousState == HeadsetState.Connected)
             {
                 Log.Information("State -> Disconnected: {Name}", status.Device?.Name ?? "Unknown device");
-                ShowNotification("Disconnected", status.Device?.Name ?? "Unknown device", ToolTipIcon.Info, _notifDisconnected);
+                ShowNotification(Strings.NotifDisconnectedTitle, status.Device?.Name ?? "Unknown device", ToolTipIcon.Info, _notifDisconnected);
                 _headsetService.Reset();
             }
         }

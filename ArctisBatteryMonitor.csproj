@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
@@ -10,50 +10,52 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Resources\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="HidSharp" Version="2.1.0" />
     <PackageReference Include="Serilog" Version="4.*" />
     <PackageReference Include="Serilog.Sinks.File" Version="6.*" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="Resources\battery-0.ico">
+    <EmbeddedResource Update="Resources\Localization\Strings.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Strings.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <Compile Update="Resources\Localization\Strings.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Strings.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Resources\Images\battery-0.ico">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Resources\battery-100.ico">
+    <None Update="Resources\Images\battery-25.ico">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Resources\battery-25.ico">
+    <None Update="Resources\Images\battery-50.ico">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Resources\battery-50.ico">
+    <None Update="Resources\Images\battery-75.ico">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Resources\battery-75.ico">
+    <None Update="Resources\Images\battery-100.ico">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Resources\full-battery.ico">
+    <None Update="Resources\Images\headset_connecting_1.ico">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Resources\full-battery.png">
+    <None Update="Resources\Images\headset_connecting_2.ico">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Resources\headset_connecting_1.ico">
+    <None Update="Resources\Images\headset_connecting_3.ico">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Resources\headset_connecting_2.ico">
+    <None Update="Resources\Images\headset_connecting_4.ico">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Resources\headset_connecting_3.ico">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Resources\headset_connecting_4.ico">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Resources\headset_disconnected.ico">
+    <None Update="Resources\Images\headset_disconnected.ico">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="config.json">
