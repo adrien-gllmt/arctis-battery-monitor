@@ -11,16 +11,20 @@ namespace ArctisBatteryMonitor
                 .MinimumLevel.Debug()
                 .WriteTo.File("logs/arctis-battery-monitor.log",
                     rollingInterval: RollingInterval.Day,
-                    retainedFileCountLimit: 7)
+                    retainedFileCountLimit: 7,
+                    outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
                 .CreateLogger();
 
             Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
             Application.ThreadException += OnThreadException;
             AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
 
+            Log.Information("Application starting");
+
             ApplicationConfiguration.Initialize();
             Application.Run(new BatteryMonitor());
 
+            Log.Information("Application exiting");
             Log.CloseAndFlush();
         }
 

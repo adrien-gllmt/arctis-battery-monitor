@@ -1,5 +1,6 @@
 ﻿using ArctisBatteryMonitor.Models;
 using HidSharp;
+using Serilog;
 
 namespace ArctisBatteryMonitor.Services
 {
@@ -43,17 +44,26 @@ namespace ArctisBatteryMonitor.Services
         public void ScanForDevices()
         {
             _connectedDevices.Clear();
+            Log.Debug("Scanning for HID devices (vendor 0x{VendorId:X4})", VendorId);
 
             foreach (var headset in KnownHeadsets)
             {
                 if (DeviceList.Local.GetHidDevices(VendorId, headset.ProductId).Any())
                 {
+                    Log.Information("Found device: {Name} (0x{ProductId:X4})", headset.Name, headset.ProductId);
                     _connectedDevices.Add(headset);
                 }
             }
 
             if (_connectedDevices.Count > 0)
+            {
                 _chosenDevice = _connectedDevices[0];
+                Log.Information("Selected device: {Name}, {Count} total found", _chosenDevice.Name, _connectedDevices.Count);
+            }
+            else
+            {
+                Log.Debug("No devices found");
+            }
         }
 
         public HeadsetStatus GetStatus()
@@ -72,7 +82,10 @@ namespace ArctisBatteryMonitor.Services
             foreach (var device in devices)
             {
                 if (!device.TryOpen(out HidStream? hidStream))
+                {
+                    Log.Debug("Failed to open HID stream for {Name}", _chosenDevice.Name);
                     continue;
+                }
 
                 using (hidStream)
                 {
@@ -98,12 +111,14 @@ namespace ArctisBatteryMonitor.Services
                                     _ => "Disconnected"
                                 };
 
+                                Log.Debug("{Name}: battery {Battery}%, {Status}", _chosenDevice.Name, batteryLevel, chargingStatus);
                                 return new HeadsetStatus(HeadsetState.Connected, _chosenDevice, batteryLevel, chargingStatus);
                             }
                         }
                     }
-                    catch
+                    catch (Exception ex)
                     {
+                        Log.Warning(ex, "HID read error for {Name}", _chosenDevice.Name);
                         continue;
                     }
                 }
@@ -116,6 +131,7 @@ namespace ArctisBatteryMonitor.Services
 
         public void Reset()
         {
+            Log.Debug("HeadsetService reset");
             _chosenDevice = null;
             _connectedDevices.Clear();
         }
