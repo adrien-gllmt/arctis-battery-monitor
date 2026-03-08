@@ -24,8 +24,14 @@ namespace ArctisBatteryMonitor.UI
         private ToolStripMenuItem _languageEnglishItem = null!;
         private ToolStripMenuItem _languageFrenchItem = null!;
         private ToolStripMenuItem _startWithWindowsItem = null!;
+        private ToolStripMenuItem _updatesMenu = null!;
+        private ToolStripMenuItem _checkForUpdatesItem = null!;
+        private ToolStripMenuItem _updateAvailableItem = null!;
+        private ToolStripSeparator _updateSeparator = null!;
         private ToolStripMenuItem _exitItem = null!;
 
+        private string? _pendingUpdateVersion;
+        private Action? _applyUpdate;
         private bool _suppressToggleEvents;
 
         public TrayMenuBuilder(SettingsService settingsService, MenuRenderer renderer)
@@ -34,7 +40,7 @@ namespace ArctisBatteryMonitor.UI
             _renderer = renderer;
         }
 
-        public void Build(ContextMenuStrip strip, Action onReconnect, Action onExit)
+        public void Build(ContextMenuStrip strip, Action onReconnect, Action onExit, Func<Task> onCheckForUpdates)
         {
             var settings = _settingsService.Settings;
 
@@ -91,6 +97,21 @@ namespace ArctisBatteryMonitor.UI
             _startWithWindowsItem = new ToolStripMenuItem(Strings.MenuStartWithWindows) { Checked = settings.StartWithWindows, CheckOnClick = true };
             _startWithWindowsItem.CheckedChanged += OnToggleStartWithWindows;
 
+            // Updates submenu
+            _checkForUpdatesItem = new ToolStripMenuItem(Strings.MenuCheckForUpdates);
+            _checkForUpdatesItem.Click += (_, _) => _ = onCheckForUpdates();
+
+            _updateSeparator = new ToolStripSeparator { Visible = false };
+
+            _updateAvailableItem = new ToolStripMenuItem { Visible = false };
+            _updateAvailableItem.Click += (_, _) => _applyUpdate?.Invoke();
+
+            _updatesMenu = new ToolStripMenuItem(Strings.MenuUpdates);
+            _updatesMenu.DropDown.Renderer = _renderer;
+            _updatesMenu.DropDownItems.Add(_checkForUpdatesItem);
+            _updatesMenu.DropDownItems.Add(_updateSeparator);
+            _updatesMenu.DropDownItems.Add(_updateAvailableItem);
+
             _exitItem = new ToolStripMenuItem(Strings.MenuExit);
             _exitItem.Click += (_, _) => onExit();
 
@@ -100,6 +121,7 @@ namespace ArctisBatteryMonitor.UI
             strip.Items.Add(_notificationsMenu);
             strip.Items.Add(_languageMenu);
             strip.Items.Add(_startWithWindowsItem);
+            strip.Items.Add(_updatesMenu);
             strip.Items.Add(new ToolStripSeparator());
             strip.Items.Add(_exitItem);
         }
@@ -116,11 +138,30 @@ namespace ArctisBatteryMonitor.UI
             _languageMenu.Text = Strings.MenuLanguage;
             _languageSystemItem.Text = Strings.MenuLanguageSystem;
             _startWithWindowsItem.Text = Strings.MenuStartWithWindows;
+            _updatesMenu.Text = Strings.MenuUpdates;
+            _checkForUpdatesItem.Text = Strings.MenuCheckForUpdates;
+            if (_pendingUpdateVersion != null)
+                _updateAvailableItem.Text = string.Format(Strings.MenuUpdateAvailable, _pendingUpdateVersion);
             _exitItem.Text = Strings.MenuExit;
 
             // Refresh "No device found" placeholder in headset submenu if currently shown
             if (SelectHeadsetMenu.DropDownItems is [ToolStripMenuItem { Enabled: false } placeholder])
                 placeholder.Text = Strings.NoDeviceFound;
+        }
+
+        public void SetCheckingForUpdates(bool checking)
+        {
+            _checkForUpdatesItem.Enabled = !checking;
+        }
+
+        public void SetUpdateAvailable(string version, Action onApply)
+        {
+            _pendingUpdateVersion = version;
+            _applyUpdate = onApply;
+            _updateAvailableItem.Text = string.Format(Strings.MenuUpdateAvailable, version);
+            _updateSeparator.Visible = true;
+            _updateAvailableItem.Visible = true;
+            _checkForUpdatesItem.Enabled = false;
         }
 
         private void OnSelectLanguage(string? language)

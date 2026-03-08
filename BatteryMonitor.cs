@@ -21,6 +21,7 @@ namespace ArctisBatteryMonitor
 
         private readonly HeadsetService _headsetService = new();
         private readonly SettingsService _settingsService;
+        private readonly UpdateService _updateService = new();
         private readonly TrayMenuBuilder _menu;
         private readonly Timer _animationTimer = new();
         private readonly IconCache _iconCache = new();
@@ -39,7 +40,10 @@ namespace ArctisBatteryMonitor
             _headsetService.PreferredProductId = _settingsService.Settings.PreferredDeviceProductId;
 
             _menu = new TrayMenuBuilder(_settingsService, Renderer);
-            _menu.Build(_notifyIcon.ContextMenuStrip, OnReconnect, OnExit);
+            _menu.Build(_notifyIcon.ContextMenuStrip, OnReconnect, OnExit, () => CheckForUpdatesAsync());
+
+            if (_updateService.IsInstalled)
+                _ = CheckForUpdatesAsync(silent: true);
 
             _animationTimer.Interval = _timing.AnimationIntervalMs;
             _animationTimer.Tick += OnAnimationTick;
@@ -49,6 +53,26 @@ namespace ArctisBatteryMonitor
 
             Log.Information("BatteryMonitor initialized, starting monitor loop");
             _ = MonitorLoopAsync(_cts.Token);
+        }
+
+        private async Task CheckForUpdatesAsync(bool silent = false)
+        {
+            _menu.SetCheckingForUpdates(true);
+            var version = await _updateService.CheckAndDownloadAsync();
+
+            if (version != null)
+            {
+                _menu.SetUpdateAvailable(version, () => _updateService.ApplyUpdate());
+                _notifyIcon.ShowBalloonTip(3_000, Strings.NotifUpdateTitle,
+                    string.Format(Strings.NotifUpdateMessage, version), ToolTipIcon.Info);
+            }
+            else
+            {
+                _menu.SetCheckingForUpdates(false);
+                if (!silent)
+                    _notifyIcon.ShowBalloonTip(3_000, Strings.NotifUpToDateTitle,
+                        Strings.NotifUpToDateMessage, ToolTipIcon.Info);
+            }
         }
 
         private void ShowNotification(string title, string message, ToolTipIcon tipIcon, ToolStripMenuItem guard)

@@ -69,6 +69,15 @@
   <data name="MenuStartWithWindows" xml:space="preserve">
     <value>Start with Windows</value>
   </data>
+  <data name="MenuUpdates" xml:space="preserve">
+    <value>Updates</value>
+  </data>
+  <data name="MenuCheckForUpdates" xml:space="preserve">
+    <value>Check for updates</value>
+  </data>
+  <data name="MenuUpdateAvailable" xml:space="preserve">
+    <value>Restart to update ({0})</value>
+  </data>
   <data name="MenuExit" xml:space="preserve">
     <value>Exit</value>
   </data>
@@ -91,5 +100,17 @@
   </data>
   <data name="NotifDisconnectedTitle" xml:space="preserve">
     <value>Disconnected</value>
+  </data>
+  <data name="NotifUpdateTitle" xml:space="preserve">
+    <value>Update available</value>
+  </data>
+  <data name="NotifUpdateMessage" xml:space="preserve">
+    <value>Version {0} is ready to install.</value>
+  </data>
+  <data name="NotifUpToDateTitle" xml:space="preserve">
+    <value>Up to date</value>
+  </data>
+  <data name="NotifUpToDateMessage" xml:space="preserve">
+    <value>You are running the latest version.</value>
   </data>
 </root>

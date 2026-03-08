@@ -1,6 +1,7 @@
 using System.Globalization;
 using ArctisBatteryMonitor.Services;
 using Serilog;
+using Velopack;
 
 namespace ArctisBatteryMonitor
 {
@@ -9,6 +10,8 @@ namespace ArctisBatteryMonitor
         [STAThread]
         static void Main()
         {
+            VelopackApp.Build().Run();
+
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Debug()
                 .WriteTo.File("logs/arctis-battery-monitor.log",
