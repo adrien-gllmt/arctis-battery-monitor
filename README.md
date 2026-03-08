@@ -8,7 +8,7 @@ Main functionalities already exist and the app is able to display different stat
   
 Arctis Battery Monitor only lives in your system notification area.  
 ![image](https://github.com/user-attachments/assets/49355801-e7b1-4a9e-8232-0bd110548ae4)  
-By right clicking you will access the app menu (for now : Reconnect / Exit)  
+By right clicking you will access the app menu :
 ![image](https://github.com/user-attachments/assets/4f111930-a5e8-4660-bac1-146b1efb40cd)  
 
 --------------------------
