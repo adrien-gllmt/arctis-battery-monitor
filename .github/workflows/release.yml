@@ -1,0 +1,60 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  release:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify tag is on master
+        shell: bash
+        run: |
+          git fetch origin master
+          git merge-base --is-ancestor HEAD origin/master || { echo "Tag is not on master, skipping."; exit 1; }
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Install vpk
+        run: dotnet tool install -g vpk
+
+      - name: Extract version
+        id: version
+        shell: bash
+        run: echo "version=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
+
+      - name: Publish
+        run: dotnet publish -c Release -r win-x64 --self-contained false -o publish/
+
+      - name: Pack
+        run: vpk pack --packId ArctisBatteryMonitor --packVersion ${{ steps.version.outputs.version }} --packDir publish/ --mainExe ArctisBatteryMonitor.exe --framework net9-x64
+
+      - name: Extract changelog
+        id: changelog
+        shell: bash
+        run: |
+          version="${{ steps.version.outputs.version }}"
+          notes=$(awk "/^## \[$version\]/{found=1; next} found && /^## \[/{exit} found{print}" CHANGELOG.md)
+          echo "notes<<EOF" >> $GITHUB_OUTPUT
+          echo "$notes" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Upload to GitHub Releases
+        run: vpk upload github --repoUrl https://github.com/adrien-gllmt/arctis-battery-monitor --token ${{ secrets.GITHUB_TOKEN }} --tag ${{ github.ref_name }}
+
+      - name: Set release notes
+        shell: bash
+        run: gh release edit ${{ github.ref_name }} --notes "${{ steps.changelog.outputs.notes }}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

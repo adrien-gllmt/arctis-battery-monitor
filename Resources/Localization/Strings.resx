@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+
+  <!-- Menu -->
+  <data name="MenuReconnect" xml:space="preserve">
+    <value>Reconnect</value>
+  </data>
+  <data name="MenuSelectHeadset" xml:space="preserve">
+    <value>Select headset</value>
+  </data>
+  <data name="NoDeviceFound" xml:space="preserve">
+    <value>No device found</value>
+  </data>
+  <data name="MenuNotifications" xml:space="preserve">
+    <value>Notifications</value>
+  </data>
+  <data name="MenuNotifConnected" xml:space="preserve">
+    <value>Connected</value>
+  </data>
+  <data name="MenuNotifDisconnected" xml:space="preserve">
+    <value>Disconnected</value>
+  </data>
+  <data name="MenuNotifEnableAll" xml:space="preserve">
+    <value>Enable all</value>
+  </data>
+  <data name="MenuLanguage" xml:space="preserve">
+    <value>Language</value>
+  </data>
+  <data name="MenuLanguageSystem" xml:space="preserve">
+    <value>System default</value>
+  </data>
+  <data name="MenuStartWithWindows" xml:space="preserve">
+    <value>Start with Windows</value>
+  </data>
+  <data name="MenuUpdates" xml:space="preserve">
+    <value>Updates</value>
+  </data>
+  <data name="MenuCheckForUpdates" xml:space="preserve">
+    <value>Check for updates</value>
+  </data>
+  <data name="MenuUpdateAvailable" xml:space="preserve">
+    <value>Restart to update ({0})</value>
+  </data>
+  <data name="MenuExit" xml:space="preserve">
+    <value>Exit</value>
+  </data>
+
+  <!-- Notifications -->
+  <data name="NotifNoDeviceTitle" xml:space="preserve">
+    <value>No devices found</value>
+  </data>
+  <data name="NotifNoDeviceMessage" xml:space="preserve">
+    <value>Searching for devices...</value>
+  </data>
+  <data name="NotifMultipleTitle" xml:space="preserve">
+    <value>Multiple devices detected</value>
+  </data>
+  <data name="NotifMultipleMessage" xml:space="preserve">
+    <value>{0} devices found — using {1}</value>
+  </data>
+  <data name="NotifConnectedTitle" xml:space="preserve">
+    <value>Successfully connected</value>
+  </data>
+  <data name="NotifDisconnectedTitle" xml:space="preserve">
+    <value>Disconnected</value>
+  </data>
+  <data name="NotifUpdateTitle" xml:space="preserve">
+    <value>Update available</value>
+  </data>
+  <data name="NotifUpdateMessage" xml:space="preserve">
+    <value>Version {0} is ready to install.</value>
+  </data>
+  <data name="NotifUpToDateTitle" xml:space="preserve">
+    <value>Up to date</value>
+  </data>
+  <data name="NotifUpToDateMessage" xml:space="preserve">
+    <value>You are running the latest version.</value>
+  </data>
+</root>
