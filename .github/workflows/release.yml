@@ -38,7 +38,7 @@ jobs:
         run: dotnet publish -c Release -r win-x64 --self-contained false -o publish/
 
       - name: Pack
-        run: vpk pack --packId ArctisBatteryMonitor --packVersion ${{ steps.version.outputs.version }} --packDir publish/ --mainExe ArctisBatteryMonitor.exe --framework net9-x64
+        run: vpk pack --packId ArctisBatteryMonitor --packTitle "Arctis Battery Monitor" --packVersion ${{ steps.version.outputs.version }} --packDir publish/ --mainExe ArctisBatteryMonitor.exe --framework net9-x64 --icon Resources/Images/battery-100.ico
 
       - name: Extract changelog
         id: changelog
