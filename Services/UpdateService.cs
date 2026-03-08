@@ -6,25 +6,25 @@ namespace ArctisBatteryMonitor.Services
 {
     internal class UpdateService
     {
-        private readonly UpdateManager _mgr;
-        private UpdateInfo? _pendingUpdate;
+        private const string RepoUrl = "https://github.com/adrien-gllmt/arctis-battery-monitor";
 
-        public bool IsInstalled => _mgr.IsInstalled;
+        private UpdateInfo? _pendingUpdate;
+        public bool IsInstalled { get; }
 
         public UpdateService()
         {
-            var source = new GithubSource("https://github.com/adrien-gllmt/arctis-battery-monitor", null, false);
-            _mgr = new UpdateManager(source);
+            IsInstalled = new UpdateManager(new GithubSource(RepoUrl, null, false)).IsInstalled;
         }
 
         public async Task<string?> CheckAndDownloadAsync()
         {
             try
             {
-                var update = await _mgr.CheckForUpdatesAsync();
+                var mgr = new UpdateManager(new GithubSource(RepoUrl, null, false));
+                var update = await mgr.CheckForUpdatesAsync();
                 if (update == null) return null;
 
-                await _mgr.DownloadUpdatesAsync(update);
+                await mgr.DownloadUpdatesAsync(update);
                 _pendingUpdate = update;
                 return update.TargetFullRelease.Version.ToString();
             }
@@ -38,7 +38,7 @@ namespace ArctisBatteryMonitor.Services
         public void ApplyUpdate()
         {
             if (_pendingUpdate != null)
-                _mgr.ApplyUpdatesAndRestart(_pendingUpdate);
+                new UpdateManager(new GithubSource(RepoUrl, null, false)).ApplyUpdatesAndRestart(_pendingUpdate);
         }
     }
 }
