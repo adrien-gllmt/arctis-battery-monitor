@@ -33,6 +33,9 @@ Don't bother opening SteelSeries GG to check on your battery level ever again ! 
 
 Once installed, ABM starts on computer start and will display in the system notification tray. 
 > [!NOTE]
+> Windows SmartScreen may show a warning on first install as the application is not yet code-signed (this cost a couple hundreds a year). Click "More info" → "Run anyway" to proceed.
+
+> [!NOTE]
 > The tray icon may be hidden in the overflow area (the ^ arrow in the taskbar). Drag it to
 the taskbar to keep it visible permanently.
   
