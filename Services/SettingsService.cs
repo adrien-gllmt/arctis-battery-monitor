@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Serilog;
 
 namespace ArctisBatteryMonitor.Services
 {
@@ -45,10 +46,16 @@ namespace ArctisBatteryMonitor.Services
                 {
                     var json = File.ReadAllText("config.json");
                     Timing = JsonSerializer.Deserialize<TimingConfig>(json, JsonOptions) ?? new TimingConfig();
+                    Log.Debug("Loaded config from config.json");
+                }
+                else
+                {
+                    Log.Warning("config.json not found, using defaults");
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                Log.Error(ex, "Failed to load config.json, using defaults");
                 Timing = new TimingConfig();
             }
         }
@@ -61,10 +68,16 @@ namespace ArctisBatteryMonitor.Services
                 {
                     var json = File.ReadAllText(SettingsPath);
                     Settings = JsonSerializer.Deserialize<AppSettings>(json, JsonOptions) ?? new AppSettings();
+                    Log.Debug("Loaded settings from {Path}", SettingsPath);
+                }
+                else
+                {
+                    Log.Debug("Settings file not found, using defaults");
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                Log.Error(ex, "Failed to load settings from {Path}, using defaults", SettingsPath);
                 Settings = new AppSettings();
             }
         }
@@ -77,9 +90,9 @@ namespace ArctisBatteryMonitor.Services
                 var json = JsonSerializer.Serialize(Settings, JsonOptions);
                 File.WriteAllText(SettingsPath, json);
             }
-            catch
+            catch (Exception ex)
             {
-                // Best effort — don't crash the app over settings
+                Log.Error(ex, "Failed to save settings to {Path}", SettingsPath);
             }
         }
     }

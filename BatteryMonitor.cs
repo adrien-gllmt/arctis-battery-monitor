@@ -1,6 +1,7 @@
 ﻿using ArctisBatteryMonitor.Models;
 using ArctisBatteryMonitor.Services;
 using ArctisBatteryMonitor.UI;
+using Serilog;
 using Timer = System.Windows.Forms.Timer;
 
 namespace ArctisBatteryMonitor
@@ -74,6 +75,7 @@ namespace ArctisBatteryMonitor
 
             _notifyIcon.Visible = true;
 
+            Log.Information("BatteryMonitor initialized, starting monitor loop");
             _ = MonitorLoopAsync(_cts.Token);
         }
 
@@ -110,6 +112,7 @@ namespace ArctisBatteryMonitor
             _settingsService.Settings.NotifyConnected = _notifConnected.Checked;
             _settingsService.Settings.NotifyDisconnected = _notifDisconnected.Checked;
             _settingsService.Save();
+            Log.Debug("Notification settings saved");
         }
 
         private void ShowNotification(string title, string message, ToolTipIcon tipIcon, ToolStripMenuItem guard)
@@ -152,6 +155,7 @@ namespace ArctisBatteryMonitor
 
                         if (!_searchNotificationShown)
                         {
+                            Log.Information("State -> Searching, no devices found");
                             ShowNotification("No devices found", "Searching for devices...", ToolTipIcon.Info, _notifNoDevice);
                             _searchNotificationShown = true;
                         }
@@ -160,6 +164,8 @@ namespace ArctisBatteryMonitor
                         break;
 
                     case HeadsetState.Connecting:
+                        if (previousState != HeadsetState.Connecting)
+                            Log.Information("State -> Connecting to {Name}", status.Device?.Name);
                         _currentState = HeadsetState.Connecting;
                         _animationTimer.Start();
                         await DelayOrCancel(_timing.RetryDelayMs, ct);
@@ -173,9 +179,12 @@ namespace ArctisBatteryMonitor
 
                         if (previousState != HeadsetState.Connected)
                         {
+                            Log.Information("State -> Connected: {Name}, battery {Battery}% ({Charging})",
+                                status.Device!.Name, status.BatteryLevel, status.ChargingStatus);
+
                             string message = _headsetService.ConnectedDevices.Count > 1
-                                ? $"Multiple devices detected — defaulted to {status.Device!.Name}"
-                                : status.Device!.Name;
+                                ? $"Multiple devices detected — defaulted to {status.Device.Name}"
+                                : status.Device.Name;
 
                             string title = _headsetService.ConnectedDevices.Count > 1
                                 ? "Multiple devices detected"
@@ -202,6 +211,7 @@ namespace ArctisBatteryMonitor
 
             if (previousState == HeadsetState.Connected)
             {
+                Log.Information("State -> Disconnected: {Name}", status.Device?.Name ?? "Unknown device");
                 ShowNotification("Disconnected", status.Device?.Name ?? "Unknown device", ToolTipIcon.Info, _notifDisconnected);
                 _headsetService.Reset();
             }
@@ -221,6 +231,7 @@ namespace ArctisBatteryMonitor
 
         private void OnReconnect(object? sender, EventArgs e)
         {
+            Log.Information("Manual reconnect requested");
             _cts.Cancel();
             _cts.Dispose();
             _cts = new CancellationTokenSource();
@@ -235,6 +246,7 @@ namespace ArctisBatteryMonitor
 
         private void OnExit(object? sender, EventArgs e)
         {
+            Log.Information("Exit requested, shutting down");
             _cts.Cancel();
             _cts.Dispose();
             _animationTimer.Stop();
