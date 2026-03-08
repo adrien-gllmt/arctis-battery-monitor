@@ -40,5 +40,21 @@ jobs:
       - name: Pack
         run: vpk pack --packId ArctisBatteryMonitor --packVersion ${{ steps.version.outputs.version }} --packDir publish/ --mainExe ArctisBatteryMonitor.exe --framework net9-x64
 
+      - name: Extract changelog
+        id: changelog
+        shell: bash
+        run: |
+          version="${{ steps.version.outputs.version }}"
+          notes=$(awk "/^## \[$version\]/{found=1; next} found && /^## \[/{exit} found{print}" CHANGELOG.md)
+          echo "notes<<EOF" >> $GITHUB_OUTPUT
+          echo "$notes" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
       - name: Upload to GitHub Releases
         run: vpk upload github --repoUrl https://github.com/adrien-gllmt/arctis-battery-monitor --token ${{ secrets.GITHUB_TOKEN }} --tag ${{ github.ref_name }}
+
+      - name: Set release notes
+        shell: bash
+        run: gh release edit ${{ github.ref_name }} --notes "${{ steps.changelog.outputs.notes }}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
