@@ -66,6 +66,9 @@
   <data name="MenuLanguageSystem" xml:space="preserve">
     <value>System default</value>
   </data>
+  <data name="MenuStartWithWindows" xml:space="preserve">
+    <value>Start with Windows</value>
+  </data>
   <data name="MenuExit" xml:space="preserve">
     <value>Exit</value>
   </data>

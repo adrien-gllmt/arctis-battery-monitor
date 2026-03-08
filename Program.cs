@@ -24,6 +24,7 @@ namespace ArctisBatteryMonitor
             Log.Information("Application starting");
 
             var settingsService = new SettingsService();
+            StartupService.Apply(settingsService.Settings.StartWithWindows);
             ApplyCulture(settingsService.Settings.Language);
 
             ApplicationConfiguration.Initialize();

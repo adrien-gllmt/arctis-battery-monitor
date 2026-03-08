@@ -48,7 +48,7 @@ namespace ArctisBatteryMonitor.UI
 
             int dotSize = 8;
             int x = e.ImageRectangle.X + (e.ImageRectangle.Width - dotSize) / 2;
-            int y = e.ImageRectangle.Y + (e.ImageRectangle.Height - dotSize) / 2;
+            int y = (e.Item.Height - dotSize) / 2;
 
             using var brush = new SolidBrush(CheckColor);
             e.Graphics.FillEllipse(brush, x, y, dotSize, dotSize);

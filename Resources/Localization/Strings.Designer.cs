@@ -111,6 +111,12 @@ namespace ArctisBatteryMonitor.Resources.Localization {
             }
         }
 
+        internal static string MenuStartWithWindows {
+            get {
+                return ResourceManager.GetString("MenuStartWithWindows", resourceCulture);
+            }
+        }
+
         internal static string MenuExit {
             get {
                 return ResourceManager.GetString("MenuExit", resourceCulture);
