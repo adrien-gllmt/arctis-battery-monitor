@@ -43,5 +43,6 @@ This version provides the following features :
 - Automatically starts on Windows start
 - Switch between multiple devices
 - EN and FR localization
-- Automatically check for updates  
+- Automatically check for updates
+
 The battery level is as accurate as it can get, SteelSeries decided to only return five battery steps.
