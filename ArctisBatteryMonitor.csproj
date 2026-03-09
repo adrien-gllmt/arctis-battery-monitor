@@ -7,6 +7,8 @@
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
+    <ApplicationIcon>Resources\Images\battery-100.ico</ApplicationIcon>
+    <Company>Adrien G</Company>
   </PropertyGroup>
 
   <ItemGroup>
