@@ -10,6 +10,8 @@ namespace ArctisBatteryMonitor
         [STAThread]
         static void Main()
         {
+            Directory.SetCurrentDirectory(AppContext.BaseDirectory);
+
             VelopackApp.Build().Run();
 
             Log.Logger = new LoggerConfiguration()
