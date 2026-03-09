@@ -95,6 +95,11 @@ namespace ArctisBatteryMonitor.Services
                             return new HeadsetStatus(HeadsetState.Connected, _chosenDevice, batteryLevel, chargingStatus);
                         }
                     }
+                    catch (TimeoutException)
+                    {
+                        Log.Debug("HID read timed out for {Name}", _chosenDevice.Name);
+                        continue;
+                    }
                     catch (Exception ex)
                     {
                         Log.Warning(ex, "HID read error for {Name}", _chosenDevice.Name);

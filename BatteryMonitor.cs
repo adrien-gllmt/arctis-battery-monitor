@@ -16,6 +16,7 @@ namespace ArctisBatteryMonitor
         private readonly NotifyIcon _notifyIcon = new()
         {
             Text = "Arctis Battery Monitor",
+            Icon = new Icon("Resources/Images/headset_connecting_1.ico"),
             ContextMenuStrip = new ContextMenuStrip { Renderer = Renderer, ShowImageMargin = false, ShowCheckMargin = true }
         };
 

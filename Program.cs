@@ -10,13 +10,15 @@ namespace ArctisBatteryMonitor
         [STAThread]
         static void Main()
         {
+            Directory.SetCurrentDirectory(AppContext.BaseDirectory);
+
             VelopackApp.Build().Run();
 
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Debug()
-                .WriteTo.File("logs/arctis-battery-monitor.log",
+                .WriteTo.File("logs/arctis-battery-monitor-.log",
                     rollingInterval: RollingInterval.Day,
-                    retainedFileCountLimit: 7,
+                    retainedFileCountLimit: 4,
                     outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
                 .CreateLogger();
 
